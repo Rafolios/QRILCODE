@@ -25,7 +25,7 @@ service cloud.firestore {
     }
 
     match /qrcodes/{qrcodeId} {
-      allow get: if isSignedIn() && isOwner(resource.data.userId);
+      allow get: if true;
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       
       allow create: if isSignedIn() 

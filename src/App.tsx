@@ -22,6 +22,7 @@ export default function App() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingAnalytics, setViewingAnalytics] = useState<SavedQRCode | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  const [urlError, setUrlError] = useState<string | null>(null);
   
   const rendererRef = useRef<QRCodeRendererHandle>(null);
 
@@ -216,6 +217,15 @@ export default function App() {
   };
 
   const updateConfig = useCallback((path: string, value: any) => {
+    if (path === 'data') {
+      const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
+      if (value && !urlPattern.test(value)) {
+        setUrlError('Por favor, insira uma URL válida (ex: https://exemplo.com)');
+      } else {
+        setUrlError(null);
+      }
+    }
+    
     setConfig((prev) => {
       const newConfig = { ...prev };
       const parts = path.split('.');
@@ -313,11 +323,15 @@ export default function App() {
           </div>
           <ControlSection title="Configuração Principal" defaultOpen={true}>
             <div>
-              <Label>Dados / URL</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="mb-0">Dados / URL</Label>
+                {urlError && <span className="text-[10px] text-red-500 font-bold animate-pulse">{urlError}</span>}
+              </div>
               <Input 
                 value={config.data} 
                 onChange={(e) => updateConfig('data', e.target.value)}
                 placeholder="https://google.com"
+                className={cn(urlError ? "border-red-500/50 focus:border-red-500" : "")}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
