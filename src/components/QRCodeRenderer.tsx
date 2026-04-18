@@ -38,10 +38,10 @@ export const QRCodeRenderer = forwardRef<QRCodeRendererHandle, QRCodeRendererPro
   }, [config]);
 
   return (
-    <div className="flex items-center justify-center p-10 sm:p-16 bg-white rounded-[24px] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden relative group">
+    <div className="flex items-center justify-center p-6 sm:p-10 lg:p-12 bg-white rounded-[24px] shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden relative group max-w-full">
       <div 
         ref={containerRef} 
-        className="transition-all duration-500 ease-out transform group-hover:scale-[1.03]" 
+        className="transition-all duration-500 ease-out transform group-hover:scale-[1.03] max-w-full [&>svg]:max-w-full [&>svg]:h-auto" 
       />
     </div>
   );

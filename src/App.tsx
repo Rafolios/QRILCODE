@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Download, Upload, Trash2, QrCode, Palette, Image as ImageIcon, Box, LogIn, LogOut, Save, FolderOpen, Plus, Copy, Power, PowerOff, Edit3, BarChart3, ChevronLeft, MapPin, Tablet, Smartphone, Monitor } from 'lucide-react';
+import { Download, Upload, Trash2, QrCode, Palette, Image as ImageIcon, Box, LogIn, LogOut, Save, FolderOpen, Plus, Copy, Power, PowerOff, Edit3, BarChart3, ChevronLeft, ChevronRight, MapPin, Tablet, Smartphone, Monitor, Menu, X, Settings, Layout } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { QRCodeRenderer, QRCodeRendererHandle } from './components/QRCodeRenderer';
@@ -23,6 +23,8 @@ export default function App() {
   const [viewingAnalytics, setViewingAnalytics] = useState<SavedQRCode | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
   const rendererRef = useRef<QRCodeRendererHandle>(null);
 
@@ -260,67 +262,79 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-bg overflow-hidden font-sans selection:bg-accent selection:text-white">
       {/* Header */}
-      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-surface z-40 shrink-0">
+      <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-surface z-[70] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-lg shadow-accent/20">
-            <QrCode size={18} />
+          <button 
+            onClick={() => setIsMobileControlsOpen(!isMobileControlsOpen)}
+            className="lg:hidden p-2 rounded-lg hover:bg-surface-light text-text-dim"
+          >
+            {isMobileControlsOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-lg shadow-accent/20">
+              <QrCode size={18} />
+            </div>
+            <h1 className="font-bold tracking-tight text-lg text-text-main hidden sm:block">QRILCOUDE</h1>
           </div>
-          <h1 className="font-bold tracking-tight text-lg text-text-main">QRILCOUDE</h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {user ? (
-            <div className="flex items-center gap-3 pr-4 border-r border-border">
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] text-text-dim font-bold uppercase tracking-wider">Usuário</span>
-                <span className="text-xs text-text-main font-medium">{user.displayName}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-xs font-bold text-text-main leading-none">{user.displayName}</span>
+                <span className="text-[10px] text-text-dim leading-none mt-1">PRO</span>
               </div>
-              <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border border-border" alt="Profile" />
-              <button onClick={logout} className="p-2 hover:bg-surface-light text-text-dim hover:text-red-500 transition-colors rounded">
-                <LogOut size={16} />
+              <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border border-border shadow-sm p-0.5 bg-white" alt="Profile" referrerPolicy="no-referrer" />
+              <button onClick={logout} className="p-2 text-text-dim hover:text-red-500 transition-colors">
+                <LogOut size={18} />
               </button>
             </div>
           ) : (
             <button 
               onClick={loginWithGoogle}
-              className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold bg-white text-black hover:bg-white/90 transition-all shadow-lg shadow-white/10"
+              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl font-bold text-xs hover:bg-accent-hover transition-all shadow-md shadow-accent/10 active:scale-95"
             >
-              <LogIn size={14} />
-              ENTRAR COM GOOGLE
+              <LogIn size={16} /> <span className="hidden xs:inline">ENTRAR</span>
             </button>
           )}
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setIsProjectsOpen(true)}
-              className="px-4 py-2 rounded-md text-xs font-medium border border-border hover:bg-surface-light transition-colors flex items-center gap-2"
-            >
-              <FolderOpen size={14} />
-              MEUS PROJETOS
-            </button>
-            <button 
-              onClick={saveProject}
-              className="px-4 py-2 rounded-md text-xs font-medium bg-accent hover:bg-accent-hover text-white transition-all shadow-lg shadow-accent/20 flex items-center gap-2"
-            >
-              <Save size={14} />
-              SALVAR
-            </button>
-          </div>
         </div>
       </header>
 
-      <div className="flex-1 flex min-h-0">
-        {/* Sidebar Controls */}
-        <aside className="w-[340px] border-r border-border flex flex-col bg-surface overflow-hidden shrink-0">
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-4 border-b border-border bg-bg/50">
-            <Label>Nome do Projeto</Label>
-            <Input 
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="Ex: Cartão de Visitas"
-            />
+      <div className="flex-1 flex min-h-0 relative">
+        {/* Sidebar Controls (Desktop) & Overlay (Mobile) */}
+        <aside className={cn(
+          "bg-surface border-r border-border flex flex-col shadow-2xl transition-all duration-300 z-50",
+          "lg:relative lg:w-[340px] lg:translate-x-0 lg:shadow-none",
+          "fixed inset-y-0 left-0 w-[85%] max-w-[340px] lg:flex",
+          isMobileControlsOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
+          {/* Mobile Overlay Header */}
+          <div className="lg:hidden p-4 border-b border-border flex items-center justify-between bg-bg/50">
+            <span className="font-bold text-xs text-text-dim uppercase tracking-widest">Configurações</span>
+            <button onClick={() => setIsMobileControlsOpen(false)} className="p-1 hover:bg-surface-light rounded">
+              <ChevronLeft size={20} />
+            </button>
           </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-4 border-b border-border bg-bg/50">
+              <Label>Nome do Projeto</Label>
+              <Input 
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Ex: Cartão de Visitas"
+              />
+            </div>
+            
+            <div className="p-4 flex flex-col gap-2 lg:hidden">
+               <button 
+                onClick={() => { saveProject(); setIsMobileControlsOpen(false); }}
+                className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-accent text-white font-bold text-sm shadow-lg shadow-accent/20 active:scale-95 transition-all"
+               >
+                <Save size={18} /> SALVAR PROJETO
+               </button>
+            </div>
           <ControlSection title="Configuração Principal" defaultOpen={true}>
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -597,66 +611,121 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Preview Area */}
-      <main className="flex-1 relative flex flex-col bg-bg overflow-hidden p-8 xl:p-12">
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]">
-          <div className="w-full h-full bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px]" />
-        </div>
-
-        <div className="relative z-10 w-full h-full flex flex-col max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)] animate-pulse" />
-                <span className="font-mono text-[10px] font-bold text-accent tracking-[0.2em]">MOTOR_ATIVO</span>
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight">PRE-VISUALIZAÇÃO_VIRTUAL.JSX</h2>
-            </div>
-            <div className="flex items-center gap-6 font-mono text-[11px] text-text-dim">
-              <div className="flex flex-col items-end">
-                <span className="opacity-40">RESOLUÇÃO</span>
-                <span className="text-text-main font-bold">{config.width}x{config.height}PX</span>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div className="flex flex-col items-end">
-                <span className="opacity-40">FORMATO</span>
-                <span className="text-text-main font-bold">VEC_SVG</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 flex items-center justify-center">
-            <QRCodeRenderer 
-              ref={rendererRef} 
-              config={{
-                ...config,
-                data: currentProjectId 
-                  ? `${window.location.origin}/scan/${currentProjectId}` 
-                  : config.data
-              }} 
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {isMobileControlsOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileControlsOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/60 z-[45] backdrop-blur-sm"
             />
+          )}
+        </AnimatePresence>
+
+        {/* Main Preview Area */}
+        <main className="flex-1 relative flex flex-col bg-bg overflow-hidden p-6 lg:p-12 xl:p-24 min-h-0">
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]">
+            <div className="w-full h-full bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px]" />
           </div>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-             <div className="p-4 rounded-lg bg-surface border border-border">
-                <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Fluxo de Entrada</div>
-                <div className="text-xs font-mono text-text-main truncate">{config.data}</div>
-             </div>
-             <div className="p-4 rounded-lg bg-surface border border-border">
-                <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Nível de Correção</div>
-                <div className="text-xs font-mono text-text-main">{config.qrOptions.errorCorrectionLevel} (QUARTILE)</div>
-             </div>
-             <div className="p-4 rounded-lg bg-surface border border-border">
-                <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Carga do Sistema</div>
-                <div className="text-xs font-mono text-text-main">0.02ms / 144FPS</div>
-             </div>
+          <div className="relative z-10 w-full h-full flex flex-col max-w-5xl mx-auto overflow-auto custom-scrollbar">
+            <div className="flex items-center justify-between mb-8 lg:mb-12 shrink-0">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)] animate-pulse" />
+                  <span className="font-mono text-[10px] font-bold text-accent tracking-[0.2em]">MOTOR_ATIVO</span>
+                </div>
+                <h2 className="text-xl lg:text-2xl font-bold tracking-tight">PRE-VISUALIZAÇÃO</h2>
+              </div>
+              <div className="hidden sm:flex items-center gap-6 font-mono text-[11px] text-text-dim">
+                <div className="flex flex-col items-end">
+                  <span className="opacity-40 uppercase">Resolução</span>
+                  <span className="text-text-main font-bold">{config.width}x{config.height}PX</span>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="flex flex-col items-end">
+                  <span className="opacity-40 uppercase">Formato</span>
+                  <span className="text-text-main font-bold">VEC_SVG</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center py-8 lg:py-16">
+              <div className="relative group p-6 lg:p-8 transform transition-all duration-500">
+                <QRCodeRenderer 
+                  ref={rendererRef} 
+                  config={{
+                    ...config,
+                    data: currentProjectId 
+                      ? `${window.location.origin}/scan/${currentProjectId}` 
+                      : config.data
+                  }} 
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 lg:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-6 shrink-0 pb-20 lg:pb-0">
+               <div className="p-4 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Destino</div>
+                  <div className="text-xs font-mono text-text-main truncate">{config.data}</div>
+               </div>
+               <div className="hidden sm:block p-4 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Correção</div>
+                  <div className="text-xs font-mono text-text-main">{config.qrOptions.errorCorrectionLevel}</div>
+               </div>
+               <div className="hidden sm:block p-4 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] font-bold text-text-dim mb-1 opacity-50 uppercase tracking-widest">Carga</div>
+                  <div className="text-xs font-mono text-text-main">0.02ms</div>
+               </div>
+            </div>
           </div>
-        </div>
-      </main>
+
+          {/* Mobile Bottom Navigation (One Hand Centered) */}
+          <div className="fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-surface/80 backdrop-blur-md lg:hidden flex items-center justify-around px-2 z-[60]">
+            <button 
+              onClick={() => setIsMobileControlsOpen(true)}
+              className={cn("flex flex-col items-center gap-1 transition-colors", isMobileControlsOpen ? "text-accent" : "text-text-dim")}
+            >
+              <Settings size={20} />
+              <span className="text-[9px] font-bold uppercase tracking-widest">Ajustes</span>
+            </button>
+            <button 
+              onClick={() => setIsProjectsOpen(true)}
+              className={cn("flex flex-col items-center gap-1 transition-colors", isProjectsOpen ? "text-accent" : "text-text-dim")}
+            >
+              <FolderOpen size={20} />
+              <span className="text-[9px] font-bold uppercase tracking-widest">Projetos</span>
+            </button>
+            <div className="relative -top-6">
+              <button 
+                onClick={() => rendererRef.current?.download('png')}
+                className="w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center shadow-xl shadow-accent/30 active:scale-90 transition-all border-4 border-bg"
+              >
+                <Download size={24} />
+              </button>
+            </div>
+            <button 
+              onClick={createNew}
+              className="flex flex-col items-center gap-1 text-text-dim active:text-accent transition-colors"
+            >
+              <Plus size={20} />
+              <span className="text-[9px] font-bold uppercase tracking-widest">Novo</span>
+            </button>
+            <button 
+              onClick={saveProject}
+              className="flex flex-col items-center gap-1 text-text-dim active:text-accent transition-colors"
+            >
+              <Save size={20} />
+              <span className="text-[9px] font-bold uppercase tracking-widest">Salvar</span>
+            </button>
+          </div>
+        </main>
       </div>
 
-      {/* Status Bar */}
-      <footer className="h-8 border-t border-border flex items-center justify-between px-6 bg-surface shrink-0 font-mono text-[10px] text-text-dim z-30">
+      {/* Desktop Status Bar */}
+      <footer className="hidden lg:flex h-8 border-t border-border items-center justify-between px-6 bg-surface shrink-0 font-mono text-[10px] text-text-dim z-[70]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <span className="opacity-40 font-bold">FORMATO:</span>
@@ -686,14 +755,17 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsProjectsOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[50]"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80]"
             />
             <motion.div 
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 bottom-0 w-[400px] bg-surface border-l border-border shadow-2xl z-[60] flex flex-col"
+              className={cn(
+                "fixed right-0 top-0 bottom-0 bg-surface border-l border-border shadow-2xl z-[90] flex flex-col",
+                "w-full sm:w-[400px]"
+              )}
             >
               <div className="p-6 border-b border-border flex items-center justify-between">
                 <div>
@@ -708,7 +780,7 @@ export default function App() {
                   onClick={() => viewingAnalytics ? setViewingAnalytics(null) : setIsProjectsOpen(false)}
                   className="p-2 hover:bg-surface-light rounded-full transition-colors"
                 >
-                  <Trash2 size={18} className={cn("transition-transform", viewingAnalytics ? "" : "rotate-45")} />
+                  <ChevronRight size={20} className="text-text-dim" />
                 </button>
               </div>
 
