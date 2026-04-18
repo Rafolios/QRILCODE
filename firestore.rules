@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidQRCode(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.userId == request.auth.uid
+        && data.config is map
+        && data.active is bool
+        && (request.method == 'create' ? data.createdAt == request.time : true)
+        && data.updatedAt == request.time;
+    }
+
+    match /qrcodes/{qrcodeId} {
+      allow get: if isSignedIn() && isOwner(resource.data.userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && isValidQRCode(request.resource.data)
+        && isOwner(request.resource.data.userId);
+        
+      allow update: if isSignedIn()
+        && isOwner(resource.data.userId)
+        && isValidQRCode(request.resource.data)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
+        
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+
+      match /scans/{scanId} {
+        // Anyone can create a scan (public scanning), but only owner can read.
+        // In a real app, this create would be handled by a backend call.
+        allow create: if true; 
+        allow list, get: if isSignedIn() && isOwner(get(/databases/$(database)/documents/qrcodes/$(qrcodeId)).data.userId);
+      }
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

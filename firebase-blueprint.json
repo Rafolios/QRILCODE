@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "QRCode": {
+      "title": "Saved QR Code",
+      "description": "A saved QR code design configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Display name of the QR code" },
+        "config": { "type": "object", "description": "The complex configuration object for the QR code" },
+        "active": { "type": "boolean", "description": "Whether the QR code is currently active" },
+        "userId": { "type": "string", "description": "UID of the owner" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "config", "active", "userId"]
+    },
+    "Scan": {
+      "title": "Scan Log",
+      "description": "Data from a single scan event",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "device": { "type": "string", "description": "Mobile, Desktop, Tablet" },
+        "os": { "type": "string", "description": "iOS, Android, Windows, Mac" },
+        "location": { "type": "string", "description": "City or Country" }
+      },
+      "required": ["timestamp"]
+    }
+  },
+  "firestore": {
+    "/qrcodes/{qrcodeId}": {
+      "schema": "QRCode",
+      "description": "Collection of saved QR code designs"
+    },
+    "/qrcodes/{qrcodeId}/scans/{scanId}": {
+      "schema": "Scan",
+      "description": "Log of individual scans for a QR code"
+    }
+  }
+}
